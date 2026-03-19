@@ -1,0 +1,278 @@
+backend
+ ├ config
+ │   db.js
+ ├ controllers
+ │   authController.js
+ │   expenseController.js
+ ├ models
+ │   User.js
+ │   Expense.js
+ ├ routes
+ │   authRoutes.js
+ │   expenseRoutes.js
+ ├ middleware
+ │   authMiddleware.js
+ ├ server.js
+ └ .env
+
+import mongoose from "mongoose";
+
+// -----------------------------
+// Connect to MongoDB
+// -----------------------------
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+
+    console.log("MongoDB Connected Successfully");
+
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    process.exit(1);
+  }
+};
+
+export default connectDB;
+
+// -----------------------------
+// authController.js
+// -----------------------------
+
+// -----------------------------
+// Import required libraries
+// -----------------------------
+import User from "../models/User.js";       // our User model (MongoDB collection)
+import bcrypt from "bcryptjs";              // to hash (encrypt) passwords
+import jwt from "jsonwebtoken";             // to create login tokens (JWTs)
+
+
+// ==================================================
+// REGISTER USER
+// ==================================================
+export const registerUser = async (req, res) => {
+  try {
+    // -----------------------------
+    // Get email and password from frontend
+    // -----------------------------
+    const { email, password } = req.body;
+
+    // -----------------------------
+    // Simple validation: make sure fields are not empty
+    // -----------------------------
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // -----------------------------
+    // Check if user already exists in database
+    // -----------------------------
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // -----------------------------
+    // Encrypt (hash) the password before saving
+    // -----------------------------
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // -----------------------------
+    // Create new user in the database
+    // -----------------------------
+    const newUser = await User.create({
+      email: email,
+      password: hashedPassword
+    });
+
+    // -----------------------------
+    // Automatically log in the user by creating a JWT token
+    // -----------------------------
+    const token = jwt.sign(
+      { id: newUser._id },         // store user ID in token
+      process.env.JWT_SECRET,      // secret key from .env
+      { expiresIn: "7d" }          // token valid for 7 days
+    );
+
+    // -----------------------------
+    // Send response to frontend
+    // Include message, token, and user email
+    // -----------------------------
+    res.json({
+      message: "User registered successfully",
+      token,
+      email: newUser.email
+    });
+
+  } catch (error) {
+    // -----------------------------
+    // Catch errors and send 500 status
+    // Also log error in server for debugging
+    // -----------------------------
+    console.error(error);
+    res.status(500).json({ message: "Registration failed" });
+  }
+};
+
+
+// ==================================================
+// LOGIN USER
+// ==================================================
+export const loginUser = async (req, res) => {
+  try {
+    // -----------------------------
+    // Get login info from frontend
+    // -----------------------------
+    const { email, password } = req.body;
+
+    // -----------------------------
+    // Simple validation
+    // -----------------------------
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // -----------------------------
+    // Check if user exists in database
+    // -----------------------------
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // -----------------------------
+    // Compare provided password with hashed password in DB
+    // -----------------------------
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // -----------------------------
+    // Create a JWT token to keep user logged in
+    // -----------------------------
+    const token = jwt.sign(
+      { id: user._id },           // store user ID in token
+      process.env.JWT_SECRET,     // secret key
+      { expiresIn: "7d" }         // valid for 7 days
+    );
+
+    // -----------------------------
+    // Send response to frontend
+    // Include token and user email
+    // -----------------------------
+    res.json({
+      token,
+      email: user.email
+    });
+
+  } catch (error) {
+    // -----------------------------
+    // Catch errors and log them
+    // -----------------------------
+    console.error(error);
+    res.status(500).json({ message: "Login failed" });
+  }
+};
+
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+
+export const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select("-password"); // attach user to request
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+};
+
+// -----------------------------
+// Import mongoose
+// -----------------------------
+import mongoose from "mongoose";
+
+
+// -----------------------------
+// Create User Schema
+// This defines how user data
+// will be stored in MongoDB
+// -----------------------------
+const userSchema = new mongoose.Schema({
+
+  // user email
+  email: {
+    type: String,
+    required: true,      // email is required
+    unique: true         // no duplicate emails allowed
+  },
+
+  // user password
+  password: {
+    type: String,
+    required: true
+  }
+
+});
+
+
+// -----------------------------
+// Create User Model
+// -----------------------------
+const User = mongoose.model("User", userSchema);
+
+
+// -----------------------------
+// Export Model
+// -----------------------------
+export default User;
+
+
+// -----------------------------
+// Import Express
+// -----------------------------
+import express from "express";
+
+
+// -----------------------------
+// Import controller functions
+// -----------------------------
+import { registerUser, loginUser } from "../controllers/authController.js";
+
+
+// -----------------------------
+// Create Router
+// -----------------------------
+const router = express.Router();
+
+
+// -----------------------------
+// Register Route
+// POST /api/auth/register
+// -----------------------------
+router.post("/register", registerUser);
+
+
+// -----------------------------
+// Login Route
+// POST /api/auth/login
+// -----------------------------
+router.post("/login", loginUser);
+
+
+// -----------------------------
+// Export Router
+// -----------------------------
+
+
+export default router;
+
+look i need to make a authentication system that it first shows login page and there is an option of register after clicking that there is registration page and a button back to login page if want to 
+if email id is not found in login a msg to tell to register and in register if email already register tell to login it 
+i want the data of each email id to me seperate different private 
+i want you to re write the whole easy code (try using comments to understand that particular blocks of code functioning) for each file of backend and frontend you want me to edit pls make me a super good autherntication system
+i want the sign in option with google in it pls
+i will do as you say just make my project
