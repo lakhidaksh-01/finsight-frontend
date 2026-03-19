@@ -1,3 +1,4 @@
+import icon from '../assets/favicon.png';
 export default function Header() {
 
   const today = new Date().toLocaleDateString("en-IN", {
@@ -12,7 +13,7 @@ export default function Header() {
 
       <div className="logo-wrap">
         <div className="logo-icon">
-          💹
+          <img src={icon} alt="logo" style={{ width: '22px', height: '22px' }}/>
         </div>
 
         <div className="logo-text">
