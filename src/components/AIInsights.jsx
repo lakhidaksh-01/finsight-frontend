@@ -14,7 +14,7 @@ export default function AIInsights({ expenses, budget = 30000 }) {
     // -----------------------------
     // 1️⃣ CALL BACKEND (ML)
     // -----------------------------
-    axios.post("http://localhost:5000/api/predict", expenses)
+    axios.post("https://finsight-backend-oa0q.onrender.com/api/predict", expenses)
       .then(res => {
         const predicted = res.data.predicted_spending;
         setPrediction(predicted);

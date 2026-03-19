@@ -47,7 +47,7 @@ export default function App() {
       try {
         console.log("TOKEN:", localStorage.getItem("token")); // debug
 
-        const res = await axios.get("http://localhost:5000/api/expenses", {
+        const res = await axios.get("https://finsight-backend-oa0q.onrender.com/api/expenses", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
           }
@@ -75,7 +75,7 @@ export default function App() {
   const addExpense = async (exp) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/expenses",
+        "https://finsight-backend-oa0q.onrender.com/api/expenses",
         exp,
         {
           headers: {
@@ -97,7 +97,7 @@ export default function App() {
   const deleteExpense = async (id) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/expenses/${id}`,
+        `https://finsight-backend-oa0q.onrender.com/api/expenses/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`
@@ -118,7 +118,7 @@ export default function App() {
   const handleClearAll = async () => {
     try {
       await axios.delete(
-        "http://localhost:5000/api/expenses",
+        "https://finsight-backend-oa0q.onrender.com/api/expenses",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`

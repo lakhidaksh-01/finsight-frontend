@@ -12,7 +12,7 @@ export default function Login({ onLogin, switchToRegister }) {
       setError(""); // clear old error
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        "https://finsight-backend-oa0q.onrender.com/api/auth/login",
         { email, password }
       );
 

@@ -24,7 +24,7 @@ export default function Register({ onRegisterSuccess, switchToLogin }) {
       }
 
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "https://finsight-backend-oa0q.onrender.com/api/auth/register",
         { email, password }
       );
 
