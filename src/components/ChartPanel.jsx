@@ -30,10 +30,10 @@ if (data.length === 0) {
 }
 
   return (
-    <div className="panel">
+    <div className="panel chart-panel">
       <div className="panel-title">Spending by Category</div>
 
-      <BarChart width={400} height={150} data={data}>
+      <BarChart width="100%" height={150} data={data}>
         <XAxis dataKey="category" />
         <YAxis />
         <Tooltip />

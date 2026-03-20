@@ -29,10 +29,10 @@ export default function PredictionChart({ expenses }) {
   });
 
   return (
-    <div className="panel">
+    <div className="panel chart-panel">
       <h3 className="panel-title">Spending Trend 📈</h3>
 
-      <LineChart width={400} height={150} data={data}>
+      <LineChart width="100%" height={150} data={data}>
         <XAxis dataKey="day" />
         <YAxis />
         <Tooltip />

@@ -5,143 +5,164 @@ export default function AIInsights({ expenses, budget = 30000 }) {
   const [prediction, setPrediction] = useState(null);
   const [risk, setRisk] = useState("");
   const [topCategory, setTopCategory] = useState(null);
-  const [warning, setWarning] = useState("");
-  const [suggestion, setSuggestion] = useState("");
+  const [insight, setInsight] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!expenses.length) return;
 
-    // -----------------------------
-    // 1️⃣ CALL BACKEND (ML)
-    // -----------------------------
-    axios.post("https://finsight-backend-oa0q.onrender.com/api/predict", expenses)
-      .then(res => {
+    setLoading(true);
+
+    axios
+      .post("https://finsight-backend-oa0q.onrender.com/api/predict", expenses)
+      .then((res) => {
         const predicted = res.data.predicted_spending;
-        setPrediction(predicted);
 
-        // -----------------------------
-        // 2️⃣ BUDGET RISK
-        // -----------------------------
-        let riskLevel =
-          predicted > budget
-            ? "High Risk 🚨"
-            : predicted > budget * 0.8
-            ? "Medium Risk ⚠️"
-            : "Safe ✅";
-
-        setRisk(riskLevel);
-
-        // -----------------------------
-        // 3️⃣ TOP CATEGORY
-        // -----------------------------
         const categoryMap = {};
-
-        expenses.forEach(e => {
+        expenses.forEach((e) => {
           categoryMap[e.category] =
             (categoryMap[e.category] || 0) + e.amount;
         });
 
-        const top = Object.entries(categoryMap)
-          .sort((a, b) => b[1] - a[1])[0];
+        const top = Object.entries(categoryMap).sort(
+          (a, b) => b[1] - a[1]
+        )[0];
 
-        setTopCategory(top);
+        let riskLevel =
+          predicted > budget
+            ? "High"
+            : predicted > budget * 0.8
+            ? "Medium"
+            : "Safe";
 
-        // -----------------------------
-        // 4️⃣ WARNING
-        // -----------------------------
-        let warn = "";
+        const generateInsight = () => {
+          if (predicted > budget) {
+            return `I've analyzed your recent spending patterns. You're likely to spend around ₹${predicted} this month, which exceeds your budget of ₹${budget}. 
 
-        if (predicted > budget) {
-          warn = "You may exceed your budget this month 🚨";
-        } else if (predicted > budget * 0.8) {
-          warn = "You are close to your budget limit ⚠️";
-        } else {
-          warn = "Your spending is under control ✅";
-        }
+The main reason is your ${top?.[0]} expenses, which are significantly higher than other categories.
 
-        setWarning(warn);
+If this trend continues, you may overshoot your budget. I’d strongly suggest reducing spending in this area immediately.`;
+          }
 
-        // -----------------------------
-        // 5️⃣ SUGGESTION
-        // -----------------------------
-        if (top) {
-          setSuggestion(
-            `Try reducing ${top[0]} expenses to save more 💡`
-          );
-        }
+          if (predicted > budget * 0.8) {
+            return `You're approaching your budget with a predicted spend of ₹${predicted}. 
+
+Most of your money is going into ${top?.[0]}. A small adjustment here could help you stay within your ₹${budget} budget.
+
+You're close — just need a little control.`;
+          }
+
+          return `Good news — your spending looks healthy. You're expected to spend around ₹${predicted}, which is well within your ₹${budget} budget.
+
+Your top expense category is ${top?.[0]}, but it's still under control. Keep maintaining this balance.`;
+        };
+
+        setTimeout(() => {
+          setPrediction(predicted);
+          setRisk(riskLevel);
+          setTopCategory(top);
+          setInsight(generateInsight());
+          setLoading(false);
+        }, 1500);
       })
-      .catch(err => console.log(err));
-
+      .catch((err) => console.log(err));
   }, [expenses, budget]);
 
-  const itemStyle = {
-  marginBottom: "10px",
-  lineHeight: "1.6",
-  fontSize: "14px",
-  color: "#cfd8ff"
-};
-
-const highlight = {
-  color: "#00ffff",
-  fontWeight: "600"
-  
-};
   return (
-    <div style={{
-  background: "linear-gradient(135deg, #0f0f0f, #1a1a2e)",
-  color: "#e6f1ff",
-  padding: "25px",
-  borderRadius: "16px",
-  marginTop: "20px",
-  position: "relative",
-  overflow: "hidden",
-  border: "1px solid rgba(0,255,255,0.2)",
-  boxShadow: "0 0 25px rgba(0,255,255,0.15), inset 0 0 20px rgba(0,255,255,0.05)"
-}}>
-  
-  {/* glowing animated border */}
-  <div style={{
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "linear-gradient(120deg, transparent, rgba(0,255,255,0.2), transparent)",
-    animation: "scan 4s linear infinite"
-  }}></div>
+    <div
+      style={{
+        background: "linear-gradient(135deg, #f8fafc, #eef4ff)",
+        color: "#1e293b",
+        padding: "25px",
+        borderRadius: "16px",
+        marginTop: "20px",
+        position: "relative",
+        overflow: "hidden",
+        border: "1px solid #e2e8f0",
+        boxShadow:
+          "0 10px 25px rgba(0, 0, 0, 0.05), inset 0 0 10px rgba(59,130,246,0.05)",
+      }}
+    >
+      
 
-  <h2 style={{
-    fontSize: "20px",
-    marginBottom: "15px",
-    color: "#00ffff",
-    letterSpacing: "1px",
-  }}>
-    AI Insights 🤖
-  </h2>
+      <h2
+        style={{
+          fontSize: "20px",
+          marginBottom: "15px",
+          color: "#2563eb",
+          letterSpacing: "0.5px",
+          fontWeight: "600",
+        }}
+      >
+        AI Financial Advisor 🤖
+      </h2>
 
-  {!prediction ? (
-    <p style={{
-      fontStyle: "italic",
-      color: "#aaa",
-      animation: "pulse 1.5s infinite"
-    }}>
-      Analyzing your data...
-    </p>
-  ) : (
-    <>
-      <p style={itemStyle}>• Predicted Monthly Spending: <span style={highlight}>₹{prediction}</span></p>
-      <p style={itemStyle}>• Overspending Risk: <span style={highlight}>{risk}</span></p>
+      {loading ? (
+        <div
+          style={{
+            fontStyle: "italic",
+            color: "#64748b",
+            animation: "pulse 1.5s infinite",
+          }}
+        >
+          <p>Analyzing your financial behavior...</p>
+          <p>Detecting spending patterns...</p>
+          <p>Generating smart insights...</p>
+        </div>
+      ) : (
+        <>
+          {/* 💬 AI MESSAGE */}
+          <div
+            style={{
+              background: "#ffffff",
+              padding: "15px",
+              borderRadius: "12px",
+              lineHeight: "1.6",
+              borderLeft: "4px solid #3b82f6",
+              whiteSpace: "pre-line",
+              boxShadow: "0 5px 15px rgba(0,0,0,0.05)",
+            }}
+          >
+            <p>
+              <strong style={{ color: "#2563eb" }}>AI:</strong> {insight}
+            </p>
+          </div>
 
-      {topCategory && (
-        <p style={itemStyle}>
-          • Top Category: <span style={highlight}>{topCategory[0]}</span> (₹{topCategory[1]})
-        </p>
+          {/* 📊 EXTRA DATA */}
+          <div
+            style={{
+              marginTop: "15px",
+              fontSize: "14px",
+              color: "#475569",
+            }}
+          >
+            <p>
+              • Predicted Spend: <b style={{ color: "#0f172a" }}>₹{prediction}</b>
+            </p>
+            <p>
+              • Risk Level:{" "}
+              <b
+                style={{
+                  color:
+                    risk === "High"
+                      ? "#dc2626"
+                      : risk === "Medium"
+                      ? "#f59e0b"
+                      : "#16a34a",
+                }}
+              >
+                {risk}
+              </b>
+            </p>
+            {topCategory && (
+              <p>
+                • Main Expense:{" "}
+                <b style={{ color: "#0f172a" }}>{topCategory[0]}</b>
+              </p>
+            )}
+          </div>
+        </>
       )}
-
-      <p style={itemStyle}>• {warning}</p>
-      <p style={itemStyle}>• {suggestion}</p>
-    </>
-  )}
-</div>
+    </div>
   );
 }
