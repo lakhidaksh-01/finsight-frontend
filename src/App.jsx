@@ -11,10 +11,12 @@ import AIInsights from "./components/AIInsights";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PredictionChart from "./components/PredictionChart";
+import BudgetInput from "./components/BudgetInput";
 
 export default function App() {
 
   const [expenses, setExpenses] = useState([]);
+  const [budget, setBudget] = useState(null);
 
   // ✅ keep login state from localStorage
   const [loggedIn, setLoggedIn] = useState(
@@ -174,7 +176,8 @@ export default function App() {
         <div className="left">
           <StatsRow expenses={expenses} />
           <NewExpenseForm onAdd={addExpense} />
-          <AIInsights expenses={expenses} />
+          <BudgetInput onBudgetChange={setBudget} />
+          <AIInsights expenses={expenses} budget={budget} />
         </div>
 
         <div className="right">
